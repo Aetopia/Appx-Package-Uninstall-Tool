@@ -73,7 +73,7 @@ $Button1.Add_Click({
             $ListView.Items | Where-Object { $_.Checked } | ForEach-Object {
                 Write-Host $($AppxPackages[$_.Text])
             }
-            & $Button2_Click
+            $Button2.PerformClick()
         }
     })
 
