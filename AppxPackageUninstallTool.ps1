@@ -3,8 +3,15 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Web.Extensions
 [void][System.Windows.Forms.Application]::EnableVisualStyles()
 
-[hashtable]$AppxPackages = [ordered]@{}
+
+
 [System.Web.Script.Serialization.JavaScriptSerializer]$JavaScriptSerializer = [ System.Web.Script.Serialization.JavaScriptSerializer]::new()
+$ProgressPreference = 'SilentlyContinue'
+$JavaScriptSerializer.MaxJsonLength = ([string]$String = (Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/Aetopia/Appx-Package-Uninstall-Tool/main/Packages.json").Content).Length
+$ProgressPreference = 'Continue'
+[hashtable]$AppxPackages = [ordered]@{}
+[hashtable] $Packages = $JavaScriptSerializer.Deserialize($String, ([ordered]@{}).GetType())
+
 [System.Windows.Forms.Form]$Form = [ System.Windows.Forms.Form]::new()
 [System.Windows.Forms.TableLayoutPanel]$TableLayoutPanel1 = [System.Windows.Forms.TableLayoutPanel]::new()
 [System.Windows.Forms.TableLayoutPanel]$TableLayoutPanel2 = [System.Windows.Forms.TableLayoutPanel]::new()
@@ -21,6 +28,7 @@ $Form.StartPosition = 'CenterScreen'
         $Form.MinimizeBox = $Form.MaximizeBox = $false;
         $Form.ClientSize = [System.Drawing.Size]::new(800, 600)
         $ListView.Columns[0].Width = $ListView.ClientSize.Width })
+        $Form.Add_Load({$Button2.PerformClick()})
 [void]$Form.Controls.Add($TableLayoutPanel1)
 
 $TableLayoutPanel1.Dock = [System.Windows.Forms.DockStyle]::Fill
@@ -40,16 +48,16 @@ $ListView.View = [System.Windows.Forms.View]::Details
 $ListView.HeaderStyle = [System.Windows.Forms.ColumnHeaderStyle]::None
 $ListView.Add_ItemChecked({ 
         [System.Windows.Forms.ItemCheckedEventArgs]$ItemCheckedEventArgs = [System.Windows.Forms.ItemCheckedEventArgs]$_
-        $JavaScriptSerializer.MaxJsonLength = '{"Microsoft.XboxIdentityProvider": ["Microsoft.WindowsStore","NVIDIACorp.NVIDIAControlPanel" ]}'.Length
-        $Hashtable = $JavaScriptSerializer.Deserialize('{"Microsoft.XboxIdentityProvider": ["Microsoft.WindowsStore","NVIDIACorp.NVIDIAControlPanel" ]}', ([ordered]@{}).GetType())
-        $Button1.Enabled = !!($ListView.Items | Where-Object { $_.Checked }).Count 
-        if ($Hashtable.Contains($AppxPackages[$ItemCheckedEventArgs.Item.Text])) {
-            if ($Hashtable[$ItemCheckedEventArgs.Item.Text] | Where-Object { $_ -in $AppxPackages.Values }) {
+        $Button1.Enabled = ($ListView.Items | Where-Object { $_.Checked }).Count   
+        if ($Packages.Contains($AppxPackages[$ItemCheckedEventArgs.Item.Text])) {
+
+            if ($Packages[$ItemCheckedEventArgs.Item.Text] | 
+                Where-Object { $_ -in $AppxPackages.Values }) {
                 $ItemCheckedEventArgs.Item.Checked = $false  
                 $ItemCheckedEventArgs.Item.ForeColor = [System.Drawing.SystemColors]::GrayText
                 $ItemCheckedEventArgs.Item.BackColor = [System.Drawing.SystemColors]::InactiveBorder
                 $ItemCheckedEventArgs.Item.ToolTipText = "This package cannot be uninstalled because it depends on:`n$(
-                                       ($AppxPackages.GetEnumerator() | Where-Object {$_.Value -in $Hashtable[$ItemCheckedEventArgs.Item.Text] }).Key -Join "`n")"
+                                       ($AppxPackages.GetEnumerator() | Where-Object {$_.Value -in $Packages[$ItemCheckedEventArgs.Item.Text] }).Key -Join "`n")"
             }
         }
     } )
@@ -58,7 +66,7 @@ $ListView.Add_ItemChecked({
 $Button1.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -band [System.Windows.Forms.AnchorStyles]::Left
 $Button1.Text = "Uninstall"
 $Button1.Add_Click({
-        if ([System.Windows.Forms.MessageBox]::Show("Uninstall selected Appx packages?",
+        if ([System.Windows.Forms.MessageBox]::Show("Uninstall Selected Appx Packages?",
                 "Uninstall",
                 [ System.Windows.Forms.MessageBoxButtons]::YesNo, 
                 [ System.Windows.Forms.MessageBoxIcon]::Question) -eq [System.Windows.Forms.DialogResult]::Yes) {
@@ -71,7 +79,7 @@ $Button1.Add_Click({
 
 $Button2.Anchor = [System.Windows.Forms.AnchorStyles]::Right
 $Button2.Text = "Refresh"
-$Button2_Click = { 
+$Button2.Add_Click({ 
     $AppxPackages.Clear()
     $ListView.Items.Clear()
     Get-AppxPackage | 
@@ -86,12 +94,11 @@ $Button2_Click = {
     } 
     $AppxPackages.Keys | ForEach-Object {
         [System.Windows.Forms.ListViewItem] $ListViewItem = [System.Windows.Forms.ListViewItem]::new($_)
-        $ListViewItem.ToolTipText = "This package can be uninstalled."
+        $ListViewItem.ToolTipText = "This package can be uninstalled because it depends on nothing."
         [void]$ListView.Items.Add($ListViewItem) } 
-}
-$Button2.Add_Click($Button2_Click)
+})
 
-& $Button2_Click
+
 $Form.ClientSize = [System.Drawing.Size]::new(0, 0)
 $Form.Activate()
 [void]$Form.ShowDialog()
