@@ -3,7 +3,7 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Web.Extensions
 [void][System.Windows.Forms.Application]::EnableVisualStyles()
 
-$AppxPackages = [ordered]@{}
+[hashtable]$AppxPackages = [ordered]@{}
 [System.Windows.Forms.Form]$Form = [ System.Windows.Forms.Form]::new()
 [System.Windows.Forms.TableLayoutPanel]$TableLayoutPanel1 = [System.Windows.Forms.TableLayoutPanel]::new()
 [System.Windows.Forms.TableLayoutPanel]$TableLayoutPanel2 = [System.Windows.Forms.TableLayoutPanel]::new()
@@ -21,7 +21,7 @@ $Form.StartPosition = 'CenterScreen'
                 $Form.MinimizeBox = $Form.MaximizeBox = $false;
                 $Form.ClientSize = [System.Drawing.Size]::new(800, 600)
                 $ListView.Columns[0].Width = $ListView.ClientSize.Width })
-$Form.Add_Load({ $RefreshButton.PerformClick() })
+                [void]$Form.Add_Load({ $RefreshButton.PerformClick() })
 [void]$Form.Controls.Add($TableLayoutPanel1)
 
 $TableLayoutPanel1.Dock = [System.Windows.Forms.DockStyle]::Fill
@@ -42,12 +42,12 @@ $ListView.Dock = [System.Windows.Forms.DockStyle]::Fill
 $ListView.View = [System.Windows.Forms.View]::Details
 $ListView.HeaderStyle = [System.Windows.Forms.ColumnHeaderStyle]::None
 $ListView.add
-$ListView.Add_ItemChecked({ $UninstallButton.Enabled = [bool]($ListView.Items | Where-Object { $_.Checked }).Count } )
+[void]$ListView.Add_ItemChecked({ $UninstallButton.Enabled = [bool]($ListView.Items | Where-Object { $_.Checked }).Count } )
 [void]$ListView.Columns.Add("")
 
 $UninstallButton.Anchor = [System.Windows.Forms.AnchorStyles]::Right
 $UninstallButton.Text = "Uninstall"
-$UninstallButton.Add_Click({
+[void]$UninstallButton.Add_Click({
                 if ([System.Windows.Forms.MessageBox]::Show("Uninstall Selected Appx Packages?",
                                 "Uninstall",
                                 [ System.Windows.Forms.MessageBoxButtons]::YesNo, 
@@ -58,11 +58,11 @@ $UninstallButton.Add_Click({
         })
 
 $SelectAllButton.Text = "Select All"
-$SelectAllButton.Add_Click({ $ListView.Items | ForEach-Object { ([System.Windows.Forms.ListViewItem]$_).Checked = $true } })
+[void]$SelectAllButton.Add_Click({ $ListView.Items | ForEach-Object { ([System.Windows.Forms.ListViewItem]$_).Checked = $true } })
 
 $RefreshButton.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -band [System.Windows.Forms.AnchorStyles]::Left
 $RefreshButton.Text = "Refresh"
-$RefreshButton.Add_Click({ 
+[void]$RefreshButton.Add_Click({ 
                 $AppxPackages.Clear()
                 $ListView.Items.Clear()
                 Get-AppxPackage | 
