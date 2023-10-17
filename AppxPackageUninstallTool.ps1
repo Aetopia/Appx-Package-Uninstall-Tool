@@ -15,13 +15,17 @@ Add-Type -AssemblyName System.Web.Extensions
 $Form.Text = 'Appx Package Uninstall Tool'
 $Form.Font = [System.Drawing.SystemFonts]::MessageBoxFont
 $Form.StartPosition = 'CenterScreen'
+[void]$Form.Add_Shown({ 
+                $Form.TopMost = $true  
+                $Form.TopMost = $false
+        })
 [void]$Form.Add_Resize({  
                 $Form.Topmost = $false
                 $Form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
                 $Form.MinimizeBox = $Form.MaximizeBox = $false;
                 $Form.ClientSize = [System.Drawing.Size]::new(800, 600)
                 $ListView.Columns[0].Width = $ListView.ClientSize.Width })
-                [void]$Form.Add_Load({ $RefreshButton.PerformClick() })
+[void]$Form.Add_Load({ $RefreshButton.PerformClick() })
 [void]$Form.Controls.Add($TableLayoutPanel1)
 
 $TableLayoutPanel1.Dock = [System.Windows.Forms.DockStyle]::Fill
@@ -80,5 +84,4 @@ $RefreshButton.Text = "Refresh"
 
 
 $Form.ClientSize = [System.Drawing.Size]::new(0, 0)
-[void]$Form.Activate()
 [void]$Form.ShowDialog()
